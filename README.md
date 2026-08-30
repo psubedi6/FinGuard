@@ -63,22 +63,7 @@ FinGuard uses a relational data model designed to connect customers, accounts, t
 * **Location** — Represents geographic information associated with transactions and merchants.
 
 ### High-Level Relationships
-Customer
-   │
-   │ 1:M
-   ▼
-Account
-   │
-   │ 1:M
-   ▼
-Transaction
-   │
-   │
-   ▼
-Merchant
-   │
-   ▼
-Location
+Customer-->(1:M)Account-->(1:M)Transaction-->Merchant-->Locatiuon
 
 The final database schema may evolve as the dataset and analytical requirements are finalized.
 
