@@ -53,19 +53,162 @@ The final data model and available fields will be determined during the database
 
 
 ## Data Model
-FinGuard uses a relational data model designed to connect customers, accounts, transactions, merchants, and locations while maintaining clear relationships between entities.
+FinGuard uses a relational data model designed to organize banking information into distinct entities while minimizing unnecessary data duplication and maintaining clear relationships between records.
 
 ### Core Entities
-* **Customer** — Represents an individual banking customer.
-* **Account** — Represents a banking account associated with a customer.
-* **Transaction** — Represents a financial transaction associated with an account.
-* **Merchant** — Represents a merchant involved in a transaction.
-* **Location** — Represents geographic information associated with transactions and merchants.
+#### Customer
+Represents an individual banking customer and contains customer-level identification, demographic, geographic, and relationship information.
 
-### High-Level Relationships
-Customer-->(1:M)Account-->(1:M)Transaction-->Merchant-->Locatiuon
+#### Account
+Represents a banking account associated with a customer and contains account-level information such as account type, status, opening date, and balance.
 
-The final database schema may evolve as the dataset and analytical requirements are finalized.
+#### Transaction
+Represents a financial transaction associated with an account. Transaction-level information includes transaction date, amount, transaction type, payment method, channel, status, merchant association, and fraud indication.
+
+#### Merchant
+Represents a merchant associated with transactions and contains merchant identification, category, and geographic information.
+
+### Core Relationships
+### Entity Relationship Diagram
+
+```text
+┌─────────────────────────┐
+│        CUSTOMER         │
+├─────────────────────────┤
+│ PK customer_id          │
+│ first_name              │
+│ last_name               │
+│ date_of_birth           │
+│ gender                  │
+│ city                    │
+│ province                │
+│ country                 │
+│ customer_since          │
+│ customer_status         │
+└────────────┬────────────┘
+             │
+             │ 1 : M
+             ▼
+┌─────────────────────────┐
+│         ACCOUNT         │
+├─────────────────────────┤
+│ PK account_id           │
+│ FK customer_id          │
+│ account_type            │
+│ account_open_date       │
+│ account_status          │
+│ current_balance         │
+└────────────┬────────────┘
+             │
+             │ 1 : M
+             ▼
+┌─────────────────────────┐
+│       TRANSACTION       │
+├─────────────────────────┤
+│ PK transaction_id       │
+│ FK account_id           │
+│ FK merchant_id          │
+│ transaction_date        │
+│ transaction_type        │
+│ amount                  │
+│ payment_method          │
+│ channel                 │
+│ status                  │
+│ is_fraud                │
+└────────────┬────────────┘
+             │
+             │ M : 1
+             ▼
+┌─────────────────────────┐
+│        MERCHANT         │
+├─────────────────────────┤
+│ PK merchant_id          │
+│ merchant_name           │
+│ merchant_category       │
+│ merchant_city           │
+│ merchant_province       │
+│ merchant_country        │
+└─────────────────────────┘
+```
+
+### Relational Schema
+The current relational schema consists of four core entities:
+
+**Customer**
+* `customer_id` — Primary Key
+* `first_name`
+* `last_name`
+* `date_of_birth`
+* `gender`
+* `city`
+* `province`
+* `country`
+* `customer_since`
+* `customer_status`
+
+**Account**
+* `account_id` — Primary Key
+* `customer_id` — Foreign Key → Customer
+* `account_type`
+* `account_open_date`
+* `account_status`
+* `current_balance`
+
+**Merchant**
+* `merchant_id` — Primary Key
+* `merchant_name`
+* `merchant_category`
+* `merchant_city`
+* `merchant_province`
+* `merchant_country`
+
+**Transaction**
+* `transaction_id` — Primary Key
+* `account_id` — Foreign Key → Account
+* `merchant_id` — Foreign Key → Merchant
+* `transaction_date`
+* `transaction_type`
+* `amount`
+* `payment_method`
+* `channel`
+* `status`
+* `is_fraud`
+
+The schema is subject to refinement during implementation as the dataset structure and analytical requirements are finalized.
+
+### PostgreSQL Architecture
+FinGuard will use PostgreSQL as the relational database layer for V1.
+The initial database structure will use a dedicated `finguard` database with the default public schema.
+The core tables will include:
+* customers
+* accounts
+* merchants
+* transactions
+The tables will be connected through primary and foreign key relationships to maintain referential integrity.
+
+The planned dependency structure is:
+```text
+Customer
+   ↓
+Account
+   ↓
+Transaction
+   ↑
+Merchant
+```
+Data will be loaded in dependency order so that referenced records exist before dependent transaction records are inserted.
+Database credentials will be managed outside the source code and will not be committed to the repository.
+
+
+
+### Design Principles
+* Each core entity maintains its own attributes.
+* Primary keys uniquely identify records within each entity.
+* Foreign keys establish relationships between related entities.
+* Customer information is associated with accounts rather than being redundantly stored within transactions.
+* Merchant information is maintained separately from transaction records.
+* Location information remains context-specific until the final dataset determines whether further normalization is appropriate.
+The final relational schema may evolve during implementation as the dataset and analytical requirements are finalized.
 
 
 ## Dataset Strategy
@@ -118,6 +261,6 @@ FinGuard V1 is a banking transaction analytics and fraud intelligence platform t
 
 
 ## Project Status
-
-**Phase 0 — Project Definition & Planning**
- In Development
+**Version:** V1  
+**Status:** In Development  
+**Current Phase:** Data Preparation & Ingestion
